@@ -36,19 +36,19 @@ struct ContentView: View {
                 Button("7") { addInput(newInput: "7") }
                 Button("8") { addInput(newInput: "8") }
                 Button("9") { addInput(newInput: "9") }
-                Button("x") { setOperator(op: .multiplication) }
+                Button("x") { setOperator(.multiplication) }
             }
             HStack {
                 Button("4") { addInput(newInput: "4") }
                 Button("5") { addInput(newInput: "5") }
                 Button("6") { addInput(newInput: "6") }
-                Button(":") { setOperator(op: .division) }
+                Button(":") { setOperator(.division) }
             }
             HStack {
                 Button("1") { addInput(newInput: "1") }
                 Button("2") { addInput(newInput: "2") }
                 Button("3") { addInput(newInput: "3") }
-                Button("+") { setOperator(op: .addition) }
+                Button("+") { setOperator(.addition) }
             }
             HStack {
                 Button(".") {
@@ -92,7 +92,7 @@ struct ContentView: View {
         textInput += newInput
     }
 
-    func setOperator(op: Operator) {
+    func setOperator(_ op: Operator) {
         if textInput == "" {
             return
         }
