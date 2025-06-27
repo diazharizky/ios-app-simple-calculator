@@ -24,57 +24,83 @@ struct Input {
     }
 }
 
+struct RoundedButton: View {
+    let title: String
+    let action: () -> Void
+
+    init(_ title: String, action: @escaping () -> Void) {
+        self.title = title
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.title)
+                .foregroundColor(.white)
+                .frame(width: 50, height: 50)
+                .background(bgColor)
+                .clipShape(Circle())
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+        }
+    }
+}
+
+let bgColor = Color(red: 0.4627, green: 0.8392, blue: 1.0)
+
 struct ContentView: View {
-    @State private var textInput = ""
+    @State private var inputText = ""
     @State private var input = Input()
-    @State private var showingResult = ""
+    @State private var showingResult: String? = nil
 
     var body: some View {
         VStack {
-            Text(showingResult != "" ? showingResult : textInput)
+            Form {
+                Text(showingResult ?? inputText)
+            }
+            .frame(maxHeight: 110)
             HStack {
-                Button("7") { addInput(newInput: "7") }
-                Button("8") { addInput(newInput: "8") }
-                Button("9") { addInput(newInput: "9") }
-                Button("x") { setOperator(.multiplication) }
+                RoundedButton("7") { addInput("7") }
+                RoundedButton("8") { addInput("8") }
+                RoundedButton("9") { addInput("9") }
+                RoundedButton("x") { setOperator(.multiplication) }
             }
             HStack {
-                Button("4") { addInput(newInput: "4") }
-                Button("5") { addInput(newInput: "5") }
-                Button("6") { addInput(newInput: "6") }
-                Button(":") { setOperator(.division) }
+                RoundedButton("4") { addInput("4") }
+                RoundedButton("5") { addInput("5") }
+                RoundedButton("6") { addInput("6") }
+                RoundedButton(":") { setOperator(.division) }
             }
             HStack {
-                Button("1") { addInput(newInput: "1") }
-                Button("2") { addInput(newInput: "2") }
-                Button("3") { addInput(newInput: "3") }
-                Button("+") { setOperator(.addition) }
+                RoundedButton("1") { addInput("1") }
+                RoundedButton("2") { addInput("2") }
+                RoundedButton("3") { addInput("3") }
+                RoundedButton("+") { setOperator(.addition) }
             }
             HStack {
-                Button(".") {
-                    if textInput.count == 1 {
-                        addInput(newInput: ".")
+                RoundedButton(".") {
+                    let periodCount = inputText.filter { $0 == "." }.count
+                    guard periodCount == 0 else { return }
+                    if inputText.count >= 1 {
+                        addInput(".")
                     }
                 }
-                Button("0") { addInput(newInput: "0") }
-                Button("Delete") {
-                    if textInput == "" {
+                RoundedButton("0") { addInput("0") }
+                RoundedButton(showingResult != nil ? "AC" : "<") {
+                    if inputText.count > 0 {
+                        inputText.removeLast()
                         return
                     }
 
-                    if showingResult == "" {
-                        textInput.removeLast()
-                        return
-                    }
-
-                    showingResult = ""
-                    textInput = ""
+                    showingResult = nil
+                    inputText = ""
                     input = Input()
                 }
-                Button("-") { setOperator(op: .substraction) }
+                RoundedButton("-") { setOperator(.substraction) }
             }
-            Button("=") {
-                if textInput == "" {
+            Button(action: {
+                if inputText == "" {
                     return
                 }
 
@@ -82,38 +108,47 @@ struct ContentView: View {
                 if input.isCompleted {
                     showingResult = String(calculate())
                     input = Input()
-                    textInput = ""
+                    inputText = ""
                 }
+            }) {
+                Text("=")
+                    .fontWeight(.bold)
+                    .frame(width: 190)
+                    .padding()
+                    .background(bgColor)
+                    .foregroundColor(.white)
+                    .cornerRadius(25)
             }
         }
     }
 
-    func addInput(newInput: String) {
-        textInput += newInput
+    func addInput(_ newInput: String) {
+        showingResult = nil
+        inputText += newInput
     }
 
     func setOperator(_ op: Operator) {
-        if textInput == "" {
+        if inputText == "" {
             return
         }
 
         try? assignInput()
         if input.isCompleted {
-            // in case the operator has been assigned
-            // we can just do calculation and proceed with
-            // the next logic
+            // When all inputs have been assigned
+            // it calculates the result right away
             let res = calculate()
             input.operand1 = res
             showingResult = String(res)
         }
         input.opr = op
-        textInput = ""
+        inputText = ""
     }
 
     func assignInput() throws {
-        guard let doubledInput = Double(textInput) else {
+        guard let doubledInput = Double(inputText) else {
             throw InputError.unableToParseInput
         }
+
         if input.operand1 == nil {
             input.operand1 = doubledInput
         } else {
